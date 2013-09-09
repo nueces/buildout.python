@@ -19,8 +19,45 @@ def osdetect(buildout):
             platforms.insert(0, 'darwin-mountainlion')
     elif sys.platform == 'linux2':
         dist, version, name = platform.dist()
-        platforms.insert(0, '-'.join([sys.platform, dist.lower(), version]))
-        platforms.insert(0, '-'.join([sys.platform, dist.lower(), name.lower()]))
+        dist = dist.lower()
+        platforms.insert(0, '-'.join([sys.platform, dist]))
+        if name:
+            name = name.lower()
+            platforms.insert(0, '-'.join([sys.platform, dist, name]))
+
+        if dist == 'debian':
+            # In Debian the name always return an empty string.
+            name = 'unknown'
+            # In testing and unstable the distribution code name is returned
+            # in the version field, as:
+            # '<testing codename>/<unstable codename>'; ex: 'jessie/sid'.
+            testing = 'jessie'
+            if testing in version:
+                name = testing
+            # When a new relese is made, the testing code name change, but the
+            # unstable don't, so the 'sid' name is going to be in the version.
+            elif 'sid' in version:
+                name = 'sid'
+            else:
+                try:
+                    version = float(version)
+                except ValueError:
+                    # This no't should happer never, because when testing is
+                    # relased as the stable distribution, it start o use the
+                    # version number.
+                    pass
+                else:
+                    # Older versions works with out need of patches, at least
+                    # for now.
+                    if 7 <= version < 8:
+                        name = 'wheezy'
+                    elif 8 <= version < 9:
+                        name = 'jessie'
+
+            platforms.insert(0, '-'.join([sys.platform, dist, name]))
+        else:
+            platforms.insert(0, '-'.join([sys.platform, dist, version]))
+
     elif platform.machine() == 'x86_64':
         platforms.insert(0, 'x86_64')
 
